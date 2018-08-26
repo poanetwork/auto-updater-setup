@@ -12,8 +12,15 @@ Release service checks this file after receiving details about new release.
 - Add Release service call as in these files: [gitlab-push-release.sh](https://github.com/poanetwork/parity/blob/38892f969c3edfa81f15dcc84dc27b82e20b5b33/scripts/gitlab-push-release.sh#L14-L15), 
  [gitlab-build.sh](https://github.com/poanetwork/parity/blob/38892f969c3edfa81f15dcc84dc27b82e20b5b33/scripts/gitlab-build.sh#L159-L160)
  
-3. Release service setup:
-- Add configuration for the new network (files [config/sokol-sample.json](https://github.com/natlg/push-release/blob/04faa80b63b020649ba2d53047523ca3bed07e2d/config/sokol-sample.json) and [push-release.json](https://github.com/natlg/push-release/blob/04faa80b63b020649ba2d53047523ca3bed07e2d/push-release.json#L30-L43))
+3. GitLab setup
+- Add `secret` environment variable. It's an authentication token for requests to the Release service
+ 
+4. Release service setup:
+- Add configuration for the new network (example files [config/sokol-sample.json](https://github.com/natlg/push-release/blob/04faa80b63b020649ba2d53047523ca3bed07e2d/config/sokol-sample.json) and [push-release.json](https://github.com/natlg/push-release/blob/04faa80b63b020649ba2d53047523ca3bed07e2d/push-release.json#L30-L43))
+Specify parameters: <br>
+`secretHash`:  a Keccak-256 hash of token stored in GitLab. <br>
+account `address`: The address of the account that will be used to send transactions  <br>
+`ACCOUNT_PASSWORD`:  The password of the account. If no password is supplied, it is assumed that the account is already unlocked.
 
 
 ## Launch
@@ -28,7 +35,7 @@ Run Release service: <br>
 `pm2 start push-release.json --only push-release-sokol` <br>
 
 Check Service logs: <br>
-`pm2 show push-release-sokol` <br>
+`pm2 logs push-release-sokol [--lines 1000]` <br>
 
 
 ## How it works
@@ -71,7 +78,15 @@ Steps on the release service:<br/>
 6\. Add checksum to the Operations contract (`addChecksum` function, send parameters: `0x000000000000000000000000${commit}`, `platform`, `0x${sha3}`). <br>
 
 ### Auto updating
-- Parity updater periodically checks the latest version for the specified track using Operations contract <br>
-Updater uses Registry contract for getting Operations's address, so it's address must be specified in the `spec` file of current network as `registrar` parameter).
-- If version matches, calculates it's hash and sends it to the GithubHint contract (it's address must be stored in the Registry contract too).<br> 
-Download URL will be returned, then updater can upgrade Parity.
+Parity updater uses Operations contract for getting information about new releases and GithubHint contract for getting download url. 
+Addresses of these contracts are stored in the Registry contract and address of Registry contract is supposed to be stored in the `spec` file
+for every network. <br> <br>
+Steps performed by Parity updater:
+1. Get fork number of this release: call `release` function of Operations contract, pass parameters `_client` (parity) and `_release` (commit hash of current version), it returns forkBlock, track, semver, critical setting
+2. Get the hash of the latest release in our track: call `latestInTrack` function of Operations contract, pass parameters `_client` and `_track`. It returns the latest saved release (commit hash of new release)
+3. Get all release informatiom (fork, track, semver, is_critical) using `release` function of Operations contract
+4. Get hash of release binary: call `checksum` function of Operations contract, pass  parameters `_client`, `_release`, `_platform` parameters.
+5. Check if fork is supported.
+6. Get download url: call `entries` of GithubHint contract, pass received hash.
+7. Download binary (more likely to the folder `/home/user/.local/share/io.parity.ethereum-updates`) and upgrade.
+
