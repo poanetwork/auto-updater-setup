@@ -25,40 +25,40 @@
   `stableConfirmer`: `manual key` <br>
   `betaConfirmer`: `manual key` <br>
   `nightlyConfirmer`: `<null>` <br>
-  `address _operations`: address of Operations contracts <br>
+  `_operations`: address of Operations contracts <br>
   
   You can find an example [here](https://github.com/natlg/auto-updater/blob/b905a52b556c4ebb6dca4ffb38c708295b72e9af/migrations/2_deploy_contracts.js#L10-L20). <br>
                               
   Confirmers can be leaved empty (null value), in this case manual confirmation will not be needed. 
   But it's safer to confirm at least stable and beta releases.   <br>
 
- - With truffle you can run `truffle migrate --network sokol --verbose-rpc` for the each projects. <br> 
+ - With truffle you can run `truffle migrate --network sokol --verbose-rpc` for the each contract. First deploy SimpleOperations, then OperationsProxy with address of SimpleOperations contract as parameter.<br> 
  - Save addresses of deployed contracts.
 
 
  #### Register contracts
  
  ###### OperationsProxy:
-   - call `reserve()`  function of `Registrar` contracts, pass `Keccak-256
-                                                                 hash` of `“parityoperations”` (0x760526ad131d94f10ee75b247d523cf79f647a5ca5f1c06321d4ff9595c289f7).
+   - call `reserve`  function of `Registrar` contracts, pass `Keccak-256 hash` of `“parityoperations”` (0x760526ad131d94f10ee75b247d523cf79f647a5ca5f1c06321d4ff9595c289f7).
    It’s defined in the Release service https://github.com/paritytech/push-release/blob/master/server.js#L63 , but you can change this value.
+   This function is payable, so send 1 POA.
    
-   - call `setAddress()` function of `Registrar` contracts, pass parameters: <br>
+   - call `setAddress` function of `Registrar` contracts, pass parameters: <br>
    `_name`:  0x760526ad131d94f10ee75b247d523cf79f647a5ca5f1c06321d4ff9595c289f7 (name hash) <br>
    `_key`: A <br>
    `_value`: OperationsProxy contract address <br>
    
  ###### Operations:
- - call `reserve()` function of `Registrar` contracts, pass hash of `“operations”` (0x51ca38ad0d9c8193e2a97a5c1967a34e79112bdff5a5783aad187224fb70165e)
+ - call `reserve` function of `Registrar` contracts, pass hash of `“operations”` (0x51ca38ad0d9c8193e2a97a5c1967a34e79112bdff5a5783aad187224fb70165e). Send 1 POA.
  
- - call `setAddress()` function of `Registrar` contracts, pass parameters: <br>
+ - call `setAddress` function of `Registrar` contracts, pass parameters: <br>
  `_name`:  0x51ca38ad0d9c8193e2a97a5c1967a34e79112bdff5a5783aad187224fb70165e (name hash) <br>
  `_key`: A <br>
  `_value`: Operations contract address <br>
  
 ###### GitHubHint:
- - call `reserve()`  function of `Registrar` contracts, pass hash of `“githubhint”` (0x058740ee9a5a3fb9f1cfa10752baec87e09cc45cd7027fd54708271aca300c75)
- - call `setAddress()` function of Registrar contracts, pass parameters: <br>
+ - call `reserve`  function of `Registrar` contracts, pass hash of `“githubhint”` (0x058740ee9a5a3fb9f1cfa10752baec87e09cc45cd7027fd54708271aca300c75). Send 1 POA.
+ - call `setAddress` function of Registrar contracts, pass parameters: <br>
  `_name`:  0x058740ee9a5a3fb9f1cfa10752baec87e09cc45cd7027fd54708271aca300c75 (name hash) <br>
  `_key`: A <br>
  `_value`: GitHubHint contract address <br>
@@ -67,22 +67,23 @@
  #### Set up OperationsProxy contract
  
  Configure Parity's OperationsProxy to be the maintainer of Parity client releases in Operations. <br>
- Call `setClientOwner()` function of Operations contract from `Master key`  account, pass address of OperationsProxy contract.
+ Call `setClientOwner` function of Operations contract from `Master key`  account, pass address of OperationsProxy contract.
 
  
 ### 2. Parity setup:
 - Add address of the Registry contract to the [spec](https://github.com/poanetwork/parity/blob/38892f969c3edfa81f15dcc84dc27b82e20b5b33/ethcore/res/ethereum/sokol.json#L31) file of the new network (`registrar` parameter). 
 This contract is used by Parity and Release service for getting addresses of all other contracts. 
-- Update [util/version/Cargo.toml](https://github.com/poanetwork/parity/blob/38892f969c3edfa81f15dcc84dc27b82e20b5b33/util/version/Cargo.toml#L22) with information about the network.. <br>
+- Update [util/version/Cargo.toml](https://github.com/poanetwork/parity/blob/38892f969c3edfa81f15dcc84dc27b82e20b5b33/util/version/Cargo.toml#L22) with information about the network. <br>
 Release service checks this file after receiving details about new release. 
 - Add Release service call as in these files: [gitlab-push-release.sh](https://github.com/poanetwork/parity/blob/38892f969c3edfa81f15dcc84dc27b82e20b5b33/scripts/gitlab-push-release.sh#L14-L15), 
- [gitlab-build.sh](https://github.com/poanetwork/parity/blob/38892f969c3edfa81f15dcc84dc27b82e20b5b33/scripts/gitlab-build.sh#L159-L160)
+ [gitlab-build.sh](https://github.com/poanetwork/parity/blob/38892f969c3edfa81f15dcc84dc27b82e20b5b33/scripts/gitlab-build.sh#L159-L160), just change domain name `update.parity.io` to the address of your Release service.
+ If you don't own smart contracts on other networks, remove pushing release for them. 
  
 ### 3. GitLab setup
 - Add `secret` environment variable. It's an authentication token for requests to the Release service
  
 ### 4. Release service setup
-See deployment instructions and some more information about [Release service](https://github.com/paritytech/push-release)
+See deployment instructions and some more information about [Release service](https://github.com/paritytech/push-release#deployment).
 - Add configuration for the new network (example files [config/sokol-sample.json](https://github.com/natlg/push-release/blob/04faa80b63b020649ba2d53047523ca3bed07e2d/config/sokol-sample.json) and [push-release.json](https://github.com/natlg/push-release/blob/04faa80b63b020649ba2d53047523ca3bed07e2d/push-release.json#L30-L43))
 Specify parameters: <br>
 `secretHash`:  a Keccak-256 hash of token stored in GitLab. <br>
@@ -105,8 +106,35 @@ Run Release service: <br>
 `pm2 start push-release.json --only push-release-sokol` <br>
 
 Check Service logs: <br>
-`pm2 logs push-release-sokol [--lines 1000]` <br>
+`pm2 show push-release-sokol` <br>
+and <br>
+`pm2 logs push-release-sokol --lines 1000` <br>
 
+If need to stop server: <br>
+`pm2 stop all` <br>
+
+---
+
+###### Quick check: <br>
+- Update version, add new tag to launch pipeline.
+- Run some old version of Parity with cli options
+ `--auto-update=all --release-track=nightly  --auto-update-check-frequency=1 -l updater=trace`.
+- Wait until it's fully synchronized and all jobs in GitLab are finished, then Parity will start updating. <br><br>
+
+If updating didn't start, check logs on the Release service, if all requests were received, address of received contracts. Check all transactions in the Explorer. <br>
+
+See if release is added to the Operations contract:<br>
+Call `latestInTrack` function with parameters `_client`: `parity`, `_track`: `3` (for the `nightly` track). 
+It must return the hash of commit where tag was added (`0x000000000000000000000000` + hash). <br>
+Call `release` function, pass `parity` and hash returned from the `latestInTrack` function. See the result.
+
+See if download url is added to the GutHubHint: <br>
+Call `entries` function on the GutHubHint contract, pass hash of build (`sha3` parameter from the push-build request). Don't forget to add `0x` in the beginning.
+Download url must be returned. <br>
+
+
+If release exists on the chain, check settings of Parity then: address of Register contract in the spec file (make sure it's the same as for Parity running with Release service), 
+version, track. Any problems with blocks synchronization can stop update too.
 
 ## How it works
 
