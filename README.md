@@ -71,7 +71,7 @@
 
  
 ### 2. Parity setup:
-- Add address of the Registry contract to the [spec](https://github.com/poanetwork/parity-ethereum/blob/38892f969c3edfa81f15dcc84dc27b82e20b5b33/ethcore/res/ethereum/sokol.json#L31) file of the new network (`registrar` parameter). 
+- Add address of the Registry contract to the [spec](https://github.com/poanetwork/parity-ethereum/blob/44da9ae9910c383ee5285b63fba19b2e9682baf4/ethcore/res/ethereum/poasokol.json#L37) file of the new network (`registrar` parameter). 
 This contract is used by Parity and Release service for getting addresses of all other contracts. 
 - Update [util/version/Cargo.toml](https://github.com/poanetwork/parity-ethereum/blob/44da9ae9910c383ee5285b63fba19b2e9682baf4/util/version/Cargo.toml#L22) with information about the network. <br>
 Release service checks this file after receiving details about new release. 
