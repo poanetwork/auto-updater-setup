@@ -124,12 +124,12 @@ If need to stop server: <br>
 
 If updating didn't start, check logs on the Release service, if all requests were received, address of received contracts. Check all transactions in the Explorer. <br>
 
-######See if release is added to the Operations contract:<br>
+###### See if release is added to the Operations contract:<br>
 Call `latestInTrack` function with parameters `_client`: `parity`, `_track`: `3` (for the `nightly` track). 
 It must return the hash of commit where tag was added (`0x000000000000000000000000` + hash). <br>
 Call `release` function, pass `parity` and hash returned from the `latestInTrack` function. See the result.
 
-######See if download url is added to the GitHubHint: <br>
+###### See if download url is added to the GitHubHint: <br>
 Call `checksum` function of the Operations contract, pass `_client`: parity, `_release`: commit hash returned from the `latestInTrack` function, _platform: platform (e.g. `x86_64-unknown-linux-gnu`). 
 It should return the checksum (sha3 hash of the build).
 Call `entries` function on the GutHubHint contract, pass checksum (sent as `sha3` parameter in the push-build request). Don't forget to add `0x` in the beginning.
@@ -148,7 +148,7 @@ Release service saves all received data to smart contracts, so during auto updat
 
 Use to send information about release version to the Release service for saving to the Operations contract.
 <br>
-Example request in [CI](https://github.com/poanetwork/parity-ethereum/blob/44da9ae9910c383ee5285b63fba19b2e9682baf4/scripts/gitlab/publish-awss3.sh#L16) <br>
+Example request in [CI](https://github.com/poanetwork/parity-ethereum/blob/44da9ae9910c383ee5285b63fba19b2e9682baf4/scripts/gitlab/publish-awss3.sh#L16). <br>
 Alternatively you can send request manually: <br>
 `curl --data "secret=$SECRET" http://update-server.parity.io:1337/push-release/$BRANCH/$COMMIT`, <br>
 where <br>
@@ -169,7 +169,7 @@ OperationsProxy then either redirects call to the Operations contract or saves r
 ### Push build request
 Send this request for the each platform after builds are ready and saved to the S3 BUCKET. Also builds require confirming (using `OperationsProxy` contract) prior to becoming active.
 <br> <br>
-Example request in [CI](https://github.com/poanetwork/parity-ethereum/blob/44da9ae9910c383ee5285b63fba19b2e9682baf4/scripts/gitlab/publish-awss3.sh#L40) <br>
+Example request in [CI](https://github.com/poanetwork/parity-ethereum/blob/44da9ae9910c383ee5285b63fba19b2e9682baf4/scripts/gitlab/publish-awss3.sh#L40). <br>
 <br>
 Manual request:
 
